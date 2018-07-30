@@ -5,6 +5,11 @@ from time import sleep
 import paho.mqtt.client as mqtt
 from pixel_art import PixelArt
 
+# Import the fake sense hat module if available
+# We do this because we need a pong game to run on non-raspberry devices 
+# (using a Tkinter interface) to use it as a debugging platform and because
+# sometimes a pi is not available
+# If the "fake" module is not found, just import the normal API to se SenseHat
 try:
     from fake_sense_hat import SenseHat
 except ImportError:
@@ -14,11 +19,14 @@ except ImportError:
 DEBUG_WALLS = False
 
 class Vector_2d(object):
+    """Dead simple 2D vector class"""
     x = 0;
     y = 0;
 
 class Ball:
+    """ Class that implements the Pong ball"""
     def __init__(self, init_velocity_x, init_velocity_y, hat):
+        """Set ball to inital values"""
         self.position = Vector_2d()
         self.velocity = Vector_2d()
         self.velocity.x = init_velocity_x
@@ -31,6 +39,7 @@ class Ball:
         self.hat = hat
 
     def reinit(self):
+        """Re-initialise the ball to the default location"""
         self.velocity.x = self.init_velocity_x
         self.velocity.y = self.init_velocity_y
         self.position.x = 7
