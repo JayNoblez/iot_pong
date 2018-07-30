@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 paho-mqtt = "*"
+sense-hat = "*"
 
 [dev-packages]
 keyboard = "*"
