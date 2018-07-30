@@ -5,9 +5,9 @@ name = "pypi"
 
 [packages]
 paho-mqtt = "*"
-keyboard = "*"
 
 [dev-packages]
+keyboard = "*"
 
 [requires]
 python_version = "3.6"

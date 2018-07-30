@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8206d40a7b064905a4d0e9e3ca0d54b6a960506a346b52446b73f9fcbfdeb8b9"
+            "sha256": "6ffc26f5d498324a66d91f4ba044640a23cc737b5347c8e76e14aaad6619c811"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,14 +16,6 @@
         ]
     },
     "default": {
-        "keyboard": {
-            "hashes": [
-                "sha256:58912e4be21529fc5b57f89af7f90b0b5f5af4db08c74a8233821700eaabf189",
-                "sha256:d4375e4be666a91b71e782fdffa017cbf1a6de98f8c9fe8b66e9386944380c45"
-            ],
-            "index": "pypi",
-            "version": "==0.13.2"
-        },
         "paho-mqtt": {
             "hashes": [
                 "sha256:31911f6031de306c27ed79dc77b690d7c55b0dcb0f0434ca34ec6361d0371122"
@@ -32,5 +24,14 @@
             "version": "==1.3.1"
         }
     },
-    "develop": {}
+    "develop": {
+        "keyboard": {
+            "hashes": [
+                "sha256:58912e4be21529fc5b57f89af7f90b0b5f5af4db08c74a8233821700eaabf189",
+                "sha256:d4375e4be666a91b71e782fdffa017cbf1a6de98f8c9fe8b66e9386944380c45"
+            ],
+            "index": "pypi",
+            "version": "==0.13.2"
+        }
+    }
 }
