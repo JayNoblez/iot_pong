@@ -1,0 +1,31 @@
+<!DOCTYPE HTML>
+<html>
+
+<body>
+
+  <p>Score</p>
+  <div id="player1score">-</div>
+  <div id="player2score">-</div>
+
+  <script type="text/javascript" src="/static/jquery-3.2.1.min.js">
+  </script>
+  <script type="text/javascript" src="/static/mqtt.min.js">
+  </script> 
+  <script>
+  var client = mqtt.connect("wss://iot.eclipse.org/ws") // you add a ws:// url here
+  client.subscribe("thm_rr_iot_project/#")
+
+  client.on("message", function (topic, payload) {
+    //alert([topic, payload].join(": "))
+    if(topic == "thm_rr_iot_project/score0")
+      $( "#player1score" ).text(payload);
+    else if(topic == "thm_rr_iot_project/score1")
+      $( "#player2score" ).text(payload);
+    //client.end()
+  })
+
+  //client.publish("thm_rr_iot_project/x", "hello world!")
+  </script>
+</body>
+
+</html>
