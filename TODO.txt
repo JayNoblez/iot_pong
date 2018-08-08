@@ -1,3 +1,3 @@
-* Enter initials (also publishes a finish for the game and show animation on website)
-* Create leatherboard
-* Add comments and documentation
+* Add even more comments and documentation
+* Fix the bug where if one player starts the game when no other player is present, it is impossible to join later
+* Fix the bug where the game starts but there is no ball
