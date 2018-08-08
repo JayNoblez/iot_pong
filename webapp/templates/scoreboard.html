@@ -1,0 +1,19 @@
+<!DOCTYPE HTML>
+<html>
+{% load static %}
+
+<head>
+  <link rel="stylesheet" type="text/css" href="{% static "style.css" %}">
+  <link href='https://fonts.googleapis.com/css?family=Cutive Mono' rel='stylesheet'>
+
+  <title>Scoreboard</title>
+</head>
+
+<body>
+  <div class="center-div title">Scoreboard</div>
+  {% for game in games%}
+    <div class="center-div game-data"><span class="game-id">{{game.uid}}</span> {{game.name_player_1}} vs. {{game.name_player_2}}: {{game.score_player_1}}:{{game.score_player_2}}</div>
+  {% endfor %}
+</body>
+
+</html>

@@ -24,18 +24,20 @@ SECRET_KEY = 'keiq-ozk!cca^u4nlop&i7=06%=348d#t6+auufwuyn6durb%4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['iot-pong.herokuapp.com']
+ALLOWED_HOSTS = ['iot-pong.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'score.apps.ScoreConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'bootstrap3',
 ]
 
 MIDDLEWARE = [
@@ -129,3 +131,9 @@ DATABASES['default'].update(db_from_env)
 
 # The absolute path to the directory where collectstatic will collect static files for deployment.
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Additional locations of static files
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'score/static'),
+
+)

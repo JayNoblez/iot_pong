@@ -1,0 +1,3 @@
+* Enter initials (also publishes a finish for the game and show animation on website)
+* Create leatherboard
+* Add comments and documentation

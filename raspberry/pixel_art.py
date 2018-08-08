@@ -1,111 +1,8 @@
 import random
+from pixel_art_bitmaps import PixelArtBitmaps
 
 class PixelArt:
-    WHITE = [0, 0, 0]
-    RED = [255, 0, 0]
-    BLANK = WHITE * 8 * 8
-
-    NUMBERS = [
-        [0, 0, 0,
-         1, 1, 1,
-         1, 0, 1,
-         1, 0, 1,
-         1, 0, 1,
-         1, 0, 1,
-         1, 1, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 1, 1,
-         0, 0, 1,
-         1, 1, 1,
-         1, 0, 0,
-         1, 0, 0,
-         1, 1, 1,
-         0, 0, 0],
-        
-        [0, 0, 0,
-         1, 1, 1,
-         0, 0, 1,
-         0, 1, 1,
-         0, 0, 1,
-         0, 0, 1,
-         1, 1, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 0, 0,
-         1, 0, 1,
-         1, 1, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 1, 1,
-         1, 0, 0,
-         1, 1, 1,
-         0, 0, 1,
-         0, 0, 1,
-         1, 1, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 1, 1,
-         1, 0, 0,
-         1, 1, 1,
-         1, 0, 1,
-         1, 0, 1,
-         1, 1, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 1, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 1, 1,
-         1, 0, 1,
-         1, 1, 1,
-         1, 0, 1,
-         1, 0, 1,
-         1, 1, 1,
-         0, 0, 0],
-
-        [0, 0, 0,
-         1, 1, 1,
-         1, 0, 1,
-         1, 1, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 1,
-         0, 0, 0]
-
-    ]
-
-    UP_ARROW = [0, 0, 0, 1, 1, 0, 0, 0,
-                0, 0, 1, 1, 1, 1, 0, 0,
-                0, 1, 1, 1, 1, 1, 1, 0,
-                1, 1, 0, 1, 1, 0, 1, 1,
-                0, 0, 0, 1, 1, 0, 0, 0,
-                0, 0, 0, 1, 1, 0, 0, 0,
-                0, 0, 0, 1, 1, 0, 0, 0,
-                0, 0, 0, 1, 1, 0, 0, 0]
+    bitmaps = PixelArtBitmaps()
 
     def __init__(self):
         pass
@@ -114,7 +11,7 @@ class PixelArt:
         faded_matrix = []
 
         if fade < 0 or fade > 1:
-            return self.BLANK;
+            return self.bitmaps.BLANK;
         
         for led in matrix:
             new_led_matrix = []
@@ -130,15 +27,20 @@ class PixelArt:
             loading_matrix.append([random.randrange(255), random.randrange(255), random.randrange(255)])
         return loading_matrix
 
-    def make_up_arror(self, color = RED):
-        return self.__matrix_to_color_matrix(self.UP_ARROW, color)
+    def scan(self, line, color = bitmaps.RED):
+        matrix = [0] * 8 * 8
+        matrix[line * 8: line * 8 + 8] = [1] * 8
+        return self.__matrix_to_color_matrix(matrix, color)
 
-    def make_score(self, score1, score2, color = RED):
+    def make_up_arrow(self, color = bitmaps.RED):
+        return self.__matrix_to_color_matrix(self.bitmaps.UP_ARROW, color)
+
+    def make_score(self, score1, score2, color = bitmaps.RED):
         if score1 > 9 or score2 > 9:
             return self.BLANK;
         return self.__make_number_from_digits(score1, score2, True, color)
 
-    def make_number(self, number, color = RED):
+    def make_number(self, number, color = bitmaps.RED):
         if number > 99:
             return self.BLANK;
 
@@ -147,12 +49,15 @@ class PixelArt:
 
         return self.__make_number_from_digits(decades, singles, False, color)
 
-    def __make_number_from_digits(self, decades, singles, score, color = RED):
+    def make_letter(self, letter, color = bitmaps.RED):
+        return self.__matrix_to_color_matrix(self.bitmaps.LETTERS[letter], color)
+
+    def __make_number_from_digits(self, decades, singles, score, color = bitmaps.RED):
         number_matrix = []
         
         i = 0
-        first_digit = self.__matrix_to_color_matrix(self.NUMBERS[decades], color)
-        second_digit = self.__matrix_to_color_matrix(self.NUMBERS[singles], color)
+        first_digit = self.__matrix_to_color_matrix(self.bitmaps.NUMBERS[decades], color)
+        second_digit = self.__matrix_to_color_matrix(self.bitmaps.NUMBERS[singles], color)
         i_first_matrix = 0
         i_second_matrix = 0
 
@@ -168,7 +73,7 @@ class PixelArt:
                     if score and y in range(3, 5) and x == 4:
                         number_matrix.append([60, 60, 60])
                     else:
-                        number_matrix.append(self.WHITE)
+                        number_matrix.append(self.bitmaps.WHITE)
                 i += 1
 
         return number_matrix
@@ -179,5 +84,5 @@ class PixelArt:
             if pixel:
                 r.append(color)
             else:
-                r.append(self.WHITE)
+                r.append(self.bitmaps.WHITE)
         return r

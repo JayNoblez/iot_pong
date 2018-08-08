@@ -1,28 +1,148 @@
 <!DOCTYPE HTML>
 <html>
+{% load static %}
+
+<head>
+  {% load bootstrap3 %}
+  {% bootstrap_css %}
+  <link rel="stylesheet" type="text/css" href="{% static "style.css" %}">
+  <link href='https://fonts.googleapis.com/css?family=Cutive Mono' rel='stylesheet'>
+
+  
+  <title>IoT Pong</title>
+</head>
 
 <body>
+  <div class="center-div title">IoT Pong</div>
+  <div class="center-div score"><span id="player0score">0</span>-<span id="player1score">0</span></div>
+  <div class="center-div game-id">Game ID: <span id="session_id"></span></div>
 
-  <p>Score</p>
-  <div id="player1score">-</div>
-  <div id="player2score">-</div>
 
-  <script type="text/javascript" src="/static/jquery-3.2.1.min.js">
-  </script>
-  <script type="text/javascript" src="/static/mqtt.min.js">
-  </script> 
+  <div class="center-div slider">
+    Winning score:
+    <div id="winning_score" class="carousel slide" data-ride="carousel" data-interval="false">
+      <div class="carousel-inner">
+        <div class="item active" id="3">
+          3
+        </div>
+        <div class="item" id="5">
+          5
+        </div>
+        <div class="item" id="9">
+          9
+        </div>
+      </div>
+      <a class="left carousel-control" href="#winning_score" data-slide="prev">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="right carousel-control" href="#winning_score" data-slide="next">
+        <span class="glyphicon glyphicon-chevron-right"></span>
+        <span class="sr-only">Next</span>
+      </a>
+    </div>
+  </div>
+  <div class="center-div slider">
+    Difficulty:
+    <div id="difficulty" class="carousel slide" data-ride="carousel" data-interval="false">
+      <div class="carousel-inner">
+        <div class="item active" id="1">
+          <span class="easy">PP & SM</span>
+        </div>
+        <div class="item" id="2">
+          <span class="medium">OFC</span>
+        </div>
+        <div class="item" id="3">
+          <span class="hard">ADSP</span>
+        </div>
+      </div>
+      <a class="left carousel-control" href="#difficulty" data-slide="prev">
+        <span class="glyphicon glyphicon-chevron-left"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="right carousel-control" href="#difficulty" data-slide="next">
+        <span class="glyphicon glyphicon-chevron-right"></span>
+        <span class="sr-only">Next</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="center-div message" id="message"></div>
+
+  <script type="text/javascript" src="{% static "jquery-3.2.1.min.js" %}"></script>
+  <script type="text/javascript" src="{% static "mqtt.min.js" %}"></script> 
+  {% bootstrap_javascript %}
+  {% bootstrap_messages %}
+
   <script>
-  var client = mqtt.connect("wss://iot.eclipse.org/ws") // you add a ws:// url here
-  client.subscribe("thm_rr_iot_project/#")
+  $(document).ready(function() {
+    var client = mqtt.connect("wss://iot.eclipse.org/ws") // It is important to connect to broker via web-sockets
+    client.subscribe("thm_rr_iot_project/#")
 
-  client.on("message", function (topic, payload) {
-    //alert([topic, payload].join(": "))
-    if(topic == "thm_rr_iot_project/score0")
-      $( "#player1score" ).text(payload);
-    else if(topic == "thm_rr_iot_project/score1")
-      $( "#player2score" ).text(payload);
-    //client.end()
-  })
+    client.on("message", function (topic, payload) {
+      //alert([topic, payload].join(": "))
+      console.log([topic, payload].join(": "))
+
+      if(topic == "thm_rr_iot_project/session/id")
+      {
+        $( "#session_id" ).text(payload);
+         $( "#player0score" ).text("0");
+         $( "#player1score" ).text("0");
+      }
+      else if(topic == "thm_rr_iot_project/session/difficulty")
+        $('#difficulty').carousel(payload - 1)
+      else if(topic == "thm_rr_iot_project/session/winning_score")
+      {
+        if(payload == 3)
+          $('#winning_score').carousel(0)
+        else if(payload == 5)
+          $('#winning_score').carousel(1)
+        else if(payload == 9)
+          $('#winning_score').carousel(2)
+      }
+      else if(topic == "thm_rr_iot_project/player0/score")
+        $( "#player0score" ).text(payload);
+      else if(topic == "thm_rr_iot_project/player1/score")
+        $( "#player1score" ).text(payload);
+      else if(topic == "thm_rr_iot_project/session/game")
+      {
+        var link = "/log_game/";
+        // thm_rr_iot_project/session/game b'1fa52752-2cb8-40e4-b973-9ea7bdf030a6,AAA,3,AAA,0'
+        var payload_string = new TextDecoder("utf-8").decode(payload);
+        var game_data = payload_string.split(',');
+
+        $.ajaxSetup({
+          // CSRF is required by django
+          headers: { "X-CSRFToken": '{{csrf_token}}' }
+        });
+        // Perform a POST request to set the preference for this video
+        // TODO Correctly set the STATIC_URL variable to make the following shorter
+        $.post(link, 
+          { 'uid': game_data[0],
+            'name_player_1': game_data[1],
+            'score_player_1': game_data[2],
+            'name_player_2': game_data[3],
+            'score_player_2': game_data[4]
+        }, function(data) {
+          if(data != '')
+          {
+            var game_data = data.split(',');
+            console.log("GAME LOGGED");
+            $( "#message" ).text("Congratulations player " + game_data[0] + ", you beat " + game_data[2] + " " + game_data[1] + " to " + game_data[3] + "!");
+          }
+        });
+        return false;
+      }
+    });
+
+    $('#difficulty').on('slide.bs.carousel', function (event) {
+      client.publish("thm_rr_iot_project/session/difficulty", event.relatedTarget.id, {retain:true});
+    });
+
+    $('#winning_score').on('slide.bs.carousel', function (event) {
+      client.publish("thm_rr_iot_project/session/winning_score", event.relatedTarget.id, {retain:true});
+    });
+  });
 
   //client.publish("thm_rr_iot_project/x", "hello world!")
   </script>
