@@ -12,6 +12,7 @@ gunicorn = "==19.9.0"
 whitenoise = "==3.3.1"
 Django = "==2.0"
 "django-bootstrap3" = "*"
+paho-mqtt = "*"
 
 [requires]
 python_version = "3.6"

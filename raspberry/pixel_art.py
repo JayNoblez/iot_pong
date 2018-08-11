@@ -1,4 +1,5 @@
 import random
+import math
 from pixel_art_bitmaps import PixelArtBitmaps
 
 class PixelArt:
@@ -31,6 +32,23 @@ class PixelArt:
         matrix = [0] * 8 * 8
         matrix[line * 8: line * 8 + 8] = [1] * 8
         return self.__matrix_to_color_matrix(matrix, color)
+
+    def waiting(self, degrees, color1 = bitmaps.RED, color2 = bitmaps.GREEN):
+        x_1 = 3 + int(3 * math.cos(math.radians(degrees)))
+        y_1 = 3 + int(3 * math.sin(math.radians(degrees)))
+
+        x_2 = 3 + int(3 * -math.cos(math.radians(degrees)))
+        y_2 = 3 + int(3 * -math.sin(math.radians(degrees)))
+
+        matrix = []
+
+        for i in range(8 * 8):
+            matrix.append([0, 0, 0])
+        
+        matrix[x_1 * 8 + y_1] = color1
+        matrix[x_2 * 8 + y_2] = color2
+        return matrix
+
 
     def make_up_arrow(self, color = bitmaps.RED):
         return self.__matrix_to_color_matrix(self.bitmaps.UP_ARROW, color)

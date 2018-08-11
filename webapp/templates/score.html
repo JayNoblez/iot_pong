@@ -17,7 +17,6 @@
   <div class="center-div score"><span id="player0score">0</span>-<span id="player1score">0</span></div>
   <div class="center-div game-id">Game ID: <span id="session_id"></span></div>
 
-
   <div class="center-div slider">
     Winning score:
     <div id="winning_score" class="carousel slide" data-ride="carousel" data-interval="false">
@@ -69,6 +68,11 @@
 
   <div class="center-div message" id="message"></div>
 
+  <div class="center-div">  
+    <span><a class="center-div" href="/scoreboard">&rArr;Scoreboard</a></span>
+    <span><a class="center-div" href="/leaderboard">&rArr;Leaderboard</a></span>
+  </div>
+
   <script type="text/javascript" src="{% static "jquery-3.2.1.min.js" %}"></script>
   <script type="text/javascript" src="{% static "mqtt.min.js" %}"></script> 
   {% bootstrap_javascript %}
@@ -106,31 +110,9 @@
         $( "#player1score" ).text(payload);
       else if(topic == "thm_rr_iot_project/session/game")
       {
-        var link = "/log_game/";
-        // thm_rr_iot_project/session/game b'1fa52752-2cb8-40e4-b973-9ea7bdf030a6,AAA,3,AAA,0'
         var payload_string = new TextDecoder("utf-8").decode(payload);
         var game_data = payload_string.split(',');
-
-        $.ajaxSetup({
-          // CSRF is required by django
-          headers: { "X-CSRFToken": '{{csrf_token}}' }
-        });
-        // Perform a POST request to set the preference for this video
-        // TODO Correctly set the STATIC_URL variable to make the following shorter
-        $.post(link, 
-          { 'uid': game_data[0],
-            'name_player_1': game_data[1],
-            'score_player_1': game_data[2],
-            'name_player_2': game_data[3],
-            'score_player_2': game_data[4]
-        }, function(data) {
-          if(data != '')
-          {
-            var game_data = data.split(',');
-            console.log("GAME LOGGED");
-            $( "#message" ).text("Congratulations player " + game_data[0] + ", you beat " + game_data[2] + " " + game_data[1] + " to " + game_data[3] + "!");
-          }
-        });
+        $( "#message" ).text("Congratulations player " + game_data[1] + ", you beat " + game_data[3] + ", " + game_data[2] + " to " + game_data[4] + "!");
         return false;
       }
     });
@@ -143,8 +125,6 @@
       client.publish("thm_rr_iot_project/session/winning_score", event.relatedTarget.id, {retain:true});
     });
   });
-
-  //client.publish("thm_rr_iot_project/x", "hello world!")
   </script>
 </body>
 

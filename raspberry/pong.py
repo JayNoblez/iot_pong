@@ -189,26 +189,29 @@ def on_message(client, userdata, msg):
         client.unsubscribe("thm_rr_iot_project/player1/#")
 
     # Set the difficulty, this value is saved as retain from the webapp
-    if msg.topic == "thm_rr_iot_project/session/difficulty":
+    elif msg.topic == "thm_rr_iot_project/session/difficulty":
         client.difficulty = int(msg.payload.decode("utf-8"))
 
     # Set the winning score, this value is saved as retain from the webapp
-    if msg.topic == "thm_rr_iot_project/session/winning_score":
+    elif msg.topic == "thm_rr_iot_project/session/winning_score":
         client.winning_score = int(msg.payload.decode("utf-8"))
 
+    elif msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/join":
+        client.other_player_start = True
+
     # Receive a pass
-    if msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/pass":
+    elif msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/pass":
         if msg.payload.decode("utf-8") != "":
             client.pass_received_flag = True
             # Get the ball values from the pass
             client.pass_value_pos_x, client.pass_value_pos_y, client.pass_value_vel_x, client.pass_value_vel_y = comma_seperated_float_tuple_decode(msg.payload.decode("utf-8"))
 
     # Receive a message for a scored goal
-    if msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/score":
+    elif msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/score":
         client.goals_scored = int(msg.payload.decode("utf-8"))
         client.goal_scored_flag = True
 
-    if msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/game":
+    elif msg.topic == "thm_rr_iot_project/player" + ("1" if client.game_initiator else "0") + "/game":
         session_id, name = comma_seperated_string_tuple_decode(msg.payload.decode("utf-8"))
 
         if session_id == client.session_id:
@@ -237,6 +240,7 @@ def new_game(client, fade):
     if client.new_game_flag:
         # Reset flag
         #client.publish("thm_rr_iot_project/session/game", payload="")
+        
         client.new_game_flag = False
         return True, False
 
@@ -291,43 +295,37 @@ def select_name():
 
     while True:
         for event in hat.stick.get_events():
-            if event.direction == "up":
-                current_letter = next_letter(current_letter)
-            elif event.direction == "down":
-                current_letter = previous_letter(current_letter)
-            elif event.direction == "right":
-                # Set letter and get next letter
-                name[index] = current_letter
-                
-                index += 1
-                print(str(len(name)))
-                
-                # All letters set, return the name as a string
-                if index > (len(name) - 1):
-                    return ''.join(name)
-                
-                current_letter = name[index];
-            elif event.direction == "left":
-                # Set letter and get next letter
-                name[index] = current_letter
-                
-                index -= 1
-                
-                # Can't go lower than zero
-                if index < 0:
-                    index = 0
-                
-                current_letter = name[index];
+            if event.action == "pressed":
+                if event.direction == "up":
+                    current_letter = next_letter(current_letter)
+                elif event.direction == "down":
+                    current_letter = previous_letter(current_letter)
+                elif event.direction == "right":
+                    # Set letter and get next letter
+                    name[index] = current_letter
+                    
+                    index += 1
+                    print(str(len(name)))
+                    
+                    # All letters set, return the name as a string
+                    if index > (len(name) - 1):
+                        return ''.join(name)
+                    
+                    current_letter = name[index];
+                elif event.direction == "left":
+                    # Set letter and get next letter
+                    name[index] = current_letter
+                    
+                    index -= 1
+                    
+                    # Can't go lower than zero
+                    if index < 0:
+                        index = 0
+                    
+                    current_letter = name[index];
 
-        if blink < 2:
-            hat.set_pixels(pa.make_letter(current_letter))
-        else:
-            fill_color(hat, [0, 0, 0])
-
-        if blink > 4:
-            blink = 0
-
-        blink += 1
+        hat.set_pixels(pa.make_letter(current_letter))
+        hat.set_pixel(0, index * 2 + 2, 0, 0, 100)
 
         sleep(0.30)
 
@@ -358,6 +356,7 @@ client.pass_value_pos_x = 0
 client.pass_value_pos_y = 0
 client.pass_value_vel_x = 0
 client.pass_value_vel_y = 0
+client.other_player_start = False
 
 client.name = ""
 client.enemy_name = ""
@@ -427,10 +426,19 @@ while True:
             client.goals_suffered = 0
             client.new_game_flag = False
             if client.game_initiator:
-                next_stage = "play"
+                #next_stage = "play"
+                next_stage = "wait_for_other_player"
                 ball.reinit()
             else:
+                client.publish("thm_rr_iot_project/player" + ("0" if client.game_initiator else "1") + "/join", payload="")
                 next_stage = "wait_for_ball"
+
+    elif  next_stage == "wait_for_other_player":
+        hat.set_pixels(pa.waiting(i * 10))
+
+        if client.other_player_start:
+            client.other_player_start = False
+            next_stage = "play"
 
     elif (next_stage == "scored") or (next_stage == "suffered_goal"):
         # Show score for 2 seconds

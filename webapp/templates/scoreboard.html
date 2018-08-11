@@ -12,8 +12,13 @@
 <body>
   <div class="center-div title">Scoreboard</div>
   {% for game in games%}
-    <div class="center-div game-data"><span class="game-id">{{game.uid}}</span> {{game.name_player_1}} vs. {{game.name_player_2}}: {{game.score_player_1}}:{{game.score_player_2}}</div>
+    <div class="center-div game-data">{{game.name_player_1}} vs. {{game.name_player_2}}: {{game.score_player_1}}:{{game.score_player_2}} <span class="game-id">{{game.uid}} {{game.created}}</span></div>
   {% endfor %}
+
+  <div class="center-div">  
+    <span><a class="center-div" href="/score">&rArr;Score</a></span>
+    <span><a class="center-div" href="/leaderboard">&rArr;Leaderboard</a></span>
+  </div>
 </body>
 
 </html>
