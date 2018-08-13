@@ -1,3 +1,7 @@
-* Add even more comments and documentation
-* Fix the bug where if one player starts the game when no other player is present, it is impossible to join later
-* Fix the bug where the game starts but there is no ball
+Game: 
+ * Add more players
+ * Add more balls (difficulty)
+ * Extend local web-server to show more about the current game
+Webapp:
+ * Display historical data (e.g. complete game playback)
+ * Display scoreboard and leaderboard in a dynamical fashion as well
