@@ -84,19 +84,18 @@
     client.subscribe("thm_rr_iot_project/#")
 
     client.on("message", function (topic, payload) {
-      //alert([topic, payload].join(": "))
-      console.log([topic, payload].join(": "))
-
       if(topic == "thm_rr_iot_project/session/id")
       {
+        // Accept new uid and reset scores as a new game has started
         $( "#session_id" ).text(payload);
          $( "#player0score" ).text("0");
          $( "#player1score" ).text("0");
       }
-      else if(topic == "thm_rr_iot_project/session/difficulty")
+      else if(topic == "thm_rr_iot_project/session/difficulty") // Set difficulty to the carusel
         $('#difficulty').carousel(payload - 1)
       else if(topic == "thm_rr_iot_project/session/winning_score")
       {
+        // Set winning socre to the carusel
         if(payload == 3)
           $('#winning_score').carousel(0)
         else if(payload == 5)
@@ -104,19 +103,21 @@
         else if(payload == 9)
           $('#winning_score').carousel(2)
       }
-      else if(topic == "thm_rr_iot_project/player0/score")
+      else if(topic == "thm_rr_iot_project/player0/score") // Goal suffered for player 0
         $( "#player0score" ).text(payload);
-      else if(topic == "thm_rr_iot_project/player1/score")
+      else if(topic == "thm_rr_iot_project/player1/score") // Goal suffered for player 1
         $( "#player1score" ).text(payload);
-      else if(topic == "thm_rr_iot_project/session/game")
+      else if(topic == "thm_rr_iot_project/session/game") // Game over, display message
       {
+        // Game parameters come as comma delimited string: uid, name of player 1, score of player 1, name of player 2, score of player 2
         var payload_string = new TextDecoder("utf-8").decode(payload);
         var game_data = payload_string.split(',');
         $( "#message" ).text("Congratulations player " + game_data[1] + ", you beat " + game_data[3] + ", " + game_data[2] + " to " + game_data[4] + "!");
-        return false;
+        return false; // Do not reload
       }
     });
 
+    // Set difficulty and winning score to carusel
     $('#difficulty').on('slide.bs.carousel', function (event) {
       client.publish("thm_rr_iot_project/session/difficulty", event.relatedTarget.id, {retain:true});
     });

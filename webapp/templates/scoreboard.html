@@ -11,8 +11,9 @@
 
 <body>
   <div class="center-div title">Scoreboard</div>
+  <!-- Django template tag -->
   {% for game in games%}
-    <div class="center-div game-data">{{game.name_player_1}} vs. {{game.name_player_2}}: {{game.score_player_1}}:{{game.score_player_2}} <span class="game-id">{{game.uid}} {{game.created}}</span></div>
+    <div class="center-div game-data">{{game.name_player_1}} vs. {{game.name_player_2}}: {{game.score_player_1}}:{{game.score_player_2}} <span class="game-id">{{game.uid}} {{game.created}} (UTC)</span></div>
   {% endfor %}
 
   <div class="center-div">  

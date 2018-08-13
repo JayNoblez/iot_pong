@@ -1,4 +1,5 @@
 class PixelArtBitmaps:
+   """Byte arrays for various bitmaps used by the game"""
     WHITE = [0, 0, 0]
     RED = [255, 0, 0]
     GREEN = [0, 255, 0]

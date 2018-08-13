@@ -11,6 +11,7 @@
 
 <body>
   <div class="center-div title">Leaderboard</div>
+  <!-- Django template tag -->
   {% for player in players%}
     <div class="center-div game-data">{{player.name}}: {{player.score}}</div>
   {% endfor %}

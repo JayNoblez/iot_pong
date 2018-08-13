@@ -6,6 +6,7 @@ import uuid
 import random
 import paho.mqtt.client as mqtt
 from pixel_art import PixelArt
+from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Import the fake sense hat module if available
 # We do this because we need a pong game to run on non-raspberry devices 
@@ -18,7 +19,39 @@ except ImportError:
     from fake_sense_hat import SenseHat
     pass
 
-DEBUG_WALLS = False
+class HttpHandler(BaseHTTPRequestHandler):
+    """Minimal HTTP server. Idea from: https://gist.github.com/Integralist/ce5ebb37390ab0ae56c9e6e80128fdc2"""
+    def do_GET(self):
+        """HTTP GET request"""
+        self.respond()
+
+    def handle_http(self):
+        """Create the answer to the request"""
+        global client
+        self.send_response(200) # HTTP code
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        content = "<html><head>"
+        content += "<style>body {background: black; font-family: \'Cutive Mono\'; font-size: 22px;} p{ color: white; text-shadow: 1px 1px 2px black, 0 0 25px blue, 0 0 5px darkblue; text-align: center; white-space: nowrap; color: white; margin: 0 auto; width: 50%; margin-bottom: 25px;}</style>"
+        content += "<title>IoT Pong</title></head><body>"
+        content += "<p style=\"font-size: 200%;\">IoT Pong</p>"
+        content += "<p style=\"font-size: 150%;\">Current game attributes</p>"
+        content += "<p>Connected: " + str(client.connected_flag) + "</p>"
+        content += "<p>Session ID: " + str(client.session_id) + "</p>"
+        content += "<p>New game: " + str(client.new_game_flag) + "</p>"
+        content += "<p>Pass received: " + str(client.pass_received_flag) + "</p>"
+        content += "<p>Difficulty: " + str(client.difficulty) + "</p>"
+        content += "<p>Winning score: " + str(client.winning_score) + "</p>"
+        content += "<p>Game initiator: " + str(client.game_initiator) + "</p>"
+        content += "<p>Goals scored: " + str(client.goals_scored) + "</p>"
+        content += "<p>Goals suffered: " + str(client.goals_suffered) + "</p>"
+        content += "</body></html>"
+        return bytes(content, 'UTF-8')
+
+    def respond(self):
+        """Get response and write it to the buffer"""
+        response = self.handle_http()
+        self.wfile.write(response)
 
 class Vector_2d(object):
     """Dead simple 2D vector class"""
@@ -168,10 +201,6 @@ def on_connect(client, userdata, flags, rc):
     # Subscribe to the session topic, we are going to subscribe to the enemy player topic
     # when a game is started
     client.subscribe("thm_rr_iot_project/session/#")
-    #client.publish("thm_rr_iot_project/session/id", payload=None, retain=True)
-    #client.publish("thm_rr_iot_project/session/game", payload=None)
-    #client.publish("thm_rr_iot_project/player0/score", payload=None, retain=True)
-    #client.publish("thm_rr_iot_project/player1/score", payload=None, retain=True)
     client.connected_flag = True
 
 def on_message(client, userdata, msg):
@@ -262,6 +291,8 @@ def new_game(client, fade):
     return False, False
 
 def next_letter(letter):
+    """Returns the next letter of the alphabet (only capitals).
+       space comes after Z"""
 
     # Only support uppercase
     letter = letter.upper()
@@ -274,6 +305,8 @@ def next_letter(letter):
         return chr(ord(letter) + 1)
 
 def previous_letter(letter):
+    """Returns the previous letter of the alphabet (only capitals).
+       space comes after A"""
 
     # Only support uppercase
     letter = letter.upper()
@@ -286,6 +319,11 @@ def previous_letter(letter):
         return chr(ord(letter) - 1)
 
 def select_name():
+    """This function creates an interactive, three letter arcade-style
+       name input. The user uses the joystick to navigate through letters
+       on the y direction and can change the letter location through the y
+       direction. When done, navigate all the way to the right to exit.
+       A blue dot shows where the user currently is"""
     blink = 0
     name = ["A", "A", "A"]
     current_letter = "A"
@@ -294,8 +332,10 @@ def select_name():
     hat.set_pixels(pa.make_letter(current_letter))
 
     while True:
+        # Main loop of the selection process
+        # Get joystick events
         for event in hat.stick.get_events():
-            if event.action == "pressed":
+            if event.action == "pressed": # Change only on pressed, otherwise we get multiple changes at once
                 if event.direction == "up":
                     current_letter = next_letter(current_letter)
                 elif event.direction == "down":
@@ -324,6 +364,7 @@ def select_name():
                     
                     current_letter = name[index];
 
+        # Set the hat to the selection and set the index dot
         hat.set_pixels(pa.make_letter(current_letter))
         hat.set_pixel(0, index * 2 + 2, 0, 0, 100)
 
@@ -342,24 +383,24 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 # Set game and session flags
-client.connected_flag = False
-client.new_game_flag = False
-client.pass_received_flag = False
-client.session_id = ""
-client.difficulty = 1
-client.winning_score = 9
-client.game_initiator = False
-client.goals_scored = 0
-client.goals_suffered = 0
-client.goal_scored_flag = False
-client.pass_value_pos_x = 0
+client.connected_flag = False # True if connected
+client.new_game_flag = False  # True on new game
+client.pass_received_flag = False # True when a pass is received
+client.session_id = "" # (u)id of the current game
+client.difficulty = 1  # Difficutly of the current game (can be changed by the webapp)
+client.winning_score = 9 # Winning score of the current game (can be changed by the webapp)
+client.game_initiator = False # True if the player of this device has initiated the game
+client.goals_scored = 0       # How many goals the player of this device has scored
+client.goals_suffered = 0     # How many goals the player of this device has suffered
+client.goal_scored_flag = False # True if the other player has scored a goal
+client.pass_value_pos_x = 0 # Used to describe a pass
 client.pass_value_pos_y = 0
 client.pass_value_vel_x = 0
 client.pass_value_vel_y = 0
-client.other_player_start = False
+client.other_player_start = False # True of the other player has joined the game
 
-client.name = ""
-client.enemy_name = ""
+client.name = "" # Our name
+client.enemy_name = "" # Our enemy's name
 
 # Connect to broker
 client.connect("iot.eclipse.org", 1883, 60)
@@ -375,6 +416,10 @@ hat = SenseHat()
 ball = Ball(-1, 0.5, hat)
 paddle = Paddle(3, hat)
 
+server_class = HTTPServer
+httpd = server_class(('0.0.0.0', 8080), HttpHandler)
+httpd.timeout = 0.01
+
 # Set state machine initial state
 next_stage = "wait_for_connection"
 
@@ -387,6 +432,10 @@ scan = 0 # Counts up to 7 and then starts from 0 again
 
 # Main state machine
 while True:
+    # Handle http
+    httpd.handle_request()
+
+    # Handle counters
     if i == 100:
         inc = -1
     elif i == 0:
@@ -399,9 +448,10 @@ while True:
     if scan == 8:
         scan = 0
 
-    print(next_stage)
+    print(next_stage) # Debug print
 
     if client.new_game_flag and next_stage != "new_game":
+        # Reset current game when new game starts
         next_stage = "wait_for_ball"
         client.new_game_flag = False
 
@@ -416,7 +466,7 @@ while True:
             next_stage = "new_game"
 
     elif next_stage == "new_game":
-        # Call the new_game() function
+        # Call the new_game() function and wait for a new game initiation
         new_game_started, client.game_initiator = new_game(client, i/100)
 
         if new_game_started:
@@ -426,7 +476,6 @@ while True:
             client.goals_suffered = 0
             client.new_game_flag = False
             if client.game_initiator:
-                #next_stage = "play"
                 next_stage = "wait_for_other_player"
                 ball.reinit()
             else:
@@ -434,6 +483,7 @@ while True:
                 next_stage = "wait_for_ball"
 
     elif  next_stage == "wait_for_other_player":
+        # Set waiting animation and wait for other player
         hat.set_pixels(pa.waiting(i * 10))
 
         if client.other_player_start:
@@ -441,7 +491,8 @@ while True:
             next_stage = "play"
 
     elif (next_stage == "scored") or (next_stage == "suffered_goal"):
-        # Show score for 2 seconds
+        # Goal has been scored or suffered
+        # Show score for a second
         if next_stage == "scored":
             hat.set_pixels(pa.make_score(client.goals_scored, client.goals_suffered, [0, 255, 0]))
         else:
@@ -450,21 +501,23 @@ while True:
         for wait in range(2):
             sleep(1)
 
+        # Check for end-game condition
         if client.goals_scored >= client.winning_score or client.goals_suffered >= client.winning_score:
             # End of game, show win or lose for two seconds
             next_stage = "new_game"
             print("Goals: " + str(client.goals_suffered) + " " + str(client.goals_scored))
             
+            # Fill screen with red or green (win or lose)
             if client.goals_suffered > client.goals_scored:
-                fill_color(hat, [0, 0, 0])
-                #client.publish("thm_rr_iot_project/player" + ("0" if client.game_initiator else "1") + "/lost", payload=(client.session_id + "," + select_name()))
+                fill_color(hat, [100, 0, 0])
             else:
-                fill_color(hat, [0, 0, 0])
-                #client.publish("thm_rr_iot_project/player" + ("0" if client.game_initiator else "1") + "/won", payload=(client.session_id + "," + select_name()))
+                fill_color(hat, [0, 100, 0])
 
+            # Let the player select a name
             client.name = select_name()
             message = client.session_id + "," + client.name
 
+            # Either send the name (if the other player is not finished with his/hers yet) or send the endgame publish
             if client.enemy_name == "":
                 client.publish("thm_rr_iot_project/player" + ("0" if client.game_initiator else "1") + "/game", payload=(message))
             else:
@@ -472,50 +525,62 @@ while True:
                 client.publish("thm_rr_iot_project/session/game", payload=(message))
                 client.enemy_name = ""
 
-            #for wait in range(2):
-            #    sleep(1)
-            #continue
         else:
             if next_stage == "scored":
+                # We scored, reset ball and play
                 next_stage = "play"
                 ball.reinit()
             else:
+                # Enemy scored, wait for a pass
                 next_stage = "wait_for_ball"
 
     elif next_stage == "wait_for_ball":
+        # Wait for a pass
         if client.pass_received_flag:
+            # Pass received, set the ball
             client.pass_received_flag = False
             ball.set(client.pass_value_pos_x, client.pass_value_pos_y, client.pass_value_vel_x, client.pass_value_vel_y)
             next_stage = "play"
         
         elif client.goal_scored_flag:
+            # We scored
             client.goal_scored_flag = False
             next_stage = "scored"
 
+        # Reset screen
         fill_color(hat, [0, 0, 0])
+
+        # Draw an move paddle
         paddle.move(hat)
         paddle.draw()
 
     elif next_stage == "play":
+        # Normal play, reset screen
         fill_color(hat, [0, 0, 0])
    
+        # Move ball and paddle
         ball.move()
         paddle.move(hat)
 
+        # Check for collisions
         suffered_goal, court_change = intra_object_collision_detection(ball, paddle)
         
         if suffered_goal:
+            # We suffered a goal
             client.goals_suffered += 1
             client.publish("thm_rr_iot_project/player" + ("0" if client.game_initiator else "1") + "/score", payload=str(client.goals_suffered))
             next_stage = "suffered_goal"
 
         if court_change:
+            # Pass to other player
             client.publish("thm_rr_iot_project/player" + ("0" if client.game_initiator else "1") + "/pass", payload=pass_ball_string(ball))
             next_stage = "wait_for_ball"
         
+        # Draw the ball and paddle
         ball.draw()
         paddle.draw()
 
+    # Sleep accodring to difficulty, end of loop
     if client.difficulty == 1:
         sleep(0.15)
     elif client.difficulty == 2:
